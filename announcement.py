@@ -2,7 +2,7 @@
 from json import dumps
 import re
 from librus import SessionExpiredError
-from hashlib import md5
+from hashlib import sha1
 from base64 import b64encode
 class Announcement:
     """
@@ -22,11 +22,11 @@ class Announcement:
         self.content = content
         self.title = title
         print [self.title]
-        self.id = md5(self.title).hexdigest()
+        self.id = sha1(self.title).hexdigest()
         if trim_to_class:
             self.trim_to_class(trim_to_class)
 
-        self.checksum = md5(self.content).hexdigest() # suma kontrolna używana do porównywania ogłoszeń.
+        self.checksum = sha1(self.content).hexdigest() # suma kontrolna używana do porównywania ogłoszeń.
 
     def trim_to_class(self, cl):
         year, letter = tuple(cl)
@@ -72,7 +72,6 @@ class Announcements:
             self.librus.login()
             data = self.librus.get_announcements()
         announcement_list = [Announcement(trim_to_class=self.trim_to_class, **a) for a in data]
-        announcement_list.reverse()
         for a in announcement_list:
             if (a.id in self.announcement_list and self.announcement_list[a.id].checksum != a.checksum)\
                     or not a.id in self.announcement_list:
