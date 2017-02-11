@@ -2,7 +2,6 @@
 import cookielib
 import urllib2
 import config
-import site_parser
 from urllib import urlencode
 from json import loads
 
