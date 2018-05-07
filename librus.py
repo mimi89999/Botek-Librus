@@ -42,7 +42,7 @@ class Librus:
                                                   'username': config.login,
                                                   'password': config.password,
                                                   'librus_long_term_token': '1',
-                                              }).encode("utf-8")).read())
+                                              }).encode("utf-8")).read().decode())
 
         except urllib.error.HTTPError as e:
             e.getcode() == 400
@@ -59,7 +59,7 @@ class Librus:
         """
         # Załadowanie ogłoszeń
         try:
-            data = loads(self.__opener.open('https://api.librus.pl/2.0/SchoolNotices').read())
+            data = loads(self.__opener.open('https://api.librus.pl/2.0/SchoolNotices').read().decode())
         except urllib.error.HTTPError:
             raise SessionExpiredError
         print(data)
