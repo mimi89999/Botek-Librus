@@ -4,23 +4,31 @@
 from announcement import Announcements
 from librus import Librus
 from time import strftime, sleep
-#import xmpp
+import slixmpp
 import config
 from os.path import exists
 from json import loads, dumps
 from cgi import escape
 
-'''def send_xmpp(message_text):
-    print("Connecting to XMPP server.")
-    jid=xmpp.protocol.JID(config.xmpp_from_jid)
-    client=xmpp.Client(jid.getDomain(), debug=[])
-    client.connect()
-    client.auth(jid.getNode(), config.xmpp_password)
+class SendMsgBot(slixmpp.ClientXMPP):
 
-    for receiver in config.xmpp_receivers:
-        xmpp_message = xmpp.protocol.Message(receiver, message_text)
-        xmpp_message.setAttr('type', 'chat')
-        client.send(xmpp_message)'''
+    def __init__(self, jid, password, recipients, msg):
+        super().__init__(jid, password)
+
+        self.recipients = recipients
+        self.msg = msg
+
+        self.add_event_handler('session_start', self.start)
+
+    def start(self, event):
+        self.send_presence()
+        self.get_roster()
+
+        for recipient in self.recipients:
+            self.send_message(mto=recipient, mbody=self.msg, mtype='chat')
+
+        self.disconnect(wait=True)
+
 
 def on_new_announcement(announcement):
     global sent_announcements
@@ -35,7 +43,9 @@ def on_new_announcement(announcement):
             events.append("\nBrak zmian dla naszej klasy na ten dzień (Jak na razie)")
         message_text = announcement.title+"\n"+"\n".join(events)
         if(not config.disable_messages):
-            print(message_text)
+            xmpp = SendMsgBot(config.xmpp_from_jid, config.xmpp_password, config.xmpp_receivers, message_text)
+            xmpp.connect()
+            xmpp.process(forever=False)
         sent_announcements.append(announcement.id)
         sent_announcements.append(announcement.checksum)
         with open(".sent_announcements", "w+") as fo:
