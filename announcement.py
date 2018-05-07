@@ -21,12 +21,12 @@ class Announcement:
         self.time = time
         self.content = content
         self.title = title
-        print [self.title]
-        self.id = sha1(self.title).hexdigest()
+        print(self.title)
+        self.id = sha1(self.title.encode('utf-8')).hexdigest()
         if trim_to_class:
             self.trim_to_class(trim_to_class)
 
-        self.checksum = sha1(self.content).hexdigest() # suma kontrolna używana do porównywania ogłoszeń.
+        self.checksum = sha1(self.content.encode('utf-8')).hexdigest() # suma kontrolna używana do porównywania ogłoszeń.
 
     def trim_to_class(self, cl):
         year, letter = tuple(cl)
@@ -68,7 +68,7 @@ class Announcements:
         try:
             data = self.librus.get_announcements()
         except SessionExpiredError:
-            print "Session has expired, loging in again."
+            print("Session has expired, loging in again.")
             self.librus.login()
             data = self.librus.get_announcements()
         announcement_list = [Announcement(trim_to_class=self.trim_to_class, **a) for a in data]

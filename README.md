@@ -9,4 +9,4 @@ Zaleca się uruchamianie `LibrusOgloszenia.py` z cron co 5 minut.
 1. Rename `config.example.py` to `config.py` and complete it with your credentials.
 2. Add `LibrusOgloszenia.py` to crontab to be executed every 5 minutes. You use this line:
 
-`*/5 * * * * python2 /path/to/LibrusOgloszenia.py`
+`*/5 * * * * python3 /path/to/LibrusOgloszenia.py`

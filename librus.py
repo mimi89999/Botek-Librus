@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-import cookielib
-import urllib2
+
+import http.cookiejar
+import urllib.request
+import urllib.error
 import config
-from urllib import urlencode
+from urllib.parse import urlencode
 from json import loads
 
 
@@ -19,8 +21,8 @@ class Librus:
         self.__username = login
         self.__password = password
         # Stworzenie słoika na ciasteczka ;)
-        self.__cj = cj = cookielib.CookieJar()
-        self.__opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+        self.__cj = cj = http.cookiejar.CookieJar()
+        self.__opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
         self.__login()
 
     def login(self):
@@ -40,9 +42,9 @@ class Librus:
                                                   'username': config.login,
                                                   'password': config.password,
                                                   'librus_long_term_token': '1',
-                                              })).read())
+                                              }).encode("utf-8")).read())
 
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
             e.getcode() == 400
             raise WrongPasswordError('Nieprawidłowe hasło')
         self.__opener.addheaders = [('Authorization', 'Bearer %s' % tokens['access_token'])]
@@ -58,11 +60,11 @@ class Librus:
         # Załadowanie ogłoszeń
         try:
             data = loads(self.__opener.open('https://api.librus.pl/2.0/SchoolNotices').read())
-        except urllib2.HTTPError:
+        except urllib.error.HTTPError:
             raise SessionExpiredError
-        print data
+        print(data)
         return [{'author': notice[u'AddedBy'][u'Id'],
-                 'title': notice[u'Subject'].encode('utf-8'),
-                 'content': notice[u'Content'].encode('utf-8'),
+                 'title': notice[u'Subject'],
+                 'content': notice[u'Content'],
                  'time': notice[u'StartDate']
                  } for notice in data[u'SchoolNotices']]

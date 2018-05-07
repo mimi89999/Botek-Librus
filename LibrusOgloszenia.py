@@ -1,15 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 from announcement import Announcements
 from librus import Librus
 from time import strftime, sleep
-import xmpp
+#import xmpp
 import config
 from os.path import exists
 from json import loads, dumps
 from cgi import escape
 
-def send_xmpp(message_text):
+'''def send_xmpp(message_text):
     print("Connecting to XMPP server.")
     jid=xmpp.protocol.JID(config.xmpp_from_jid)
     client=xmpp.Client(jid.getDomain(), debug=[])
@@ -19,7 +20,7 @@ def send_xmpp(message_text):
     for receiver in config.xmpp_receivers:
         xmpp_message = xmpp.protocol.Message(receiver, message_text)
         xmpp_message.setAttr('type', 'chat')
-        client.send(xmpp_message)
+        client.send(xmpp_message)'''
 
 def on_new_announcement(announcement):
     global sent_announcements
@@ -34,7 +35,7 @@ def on_new_announcement(announcement):
             events.append("\nBrak zmian dla naszej klasy na ten dzień (Jak na razie)")
         message_text = announcement.title+"\n"+"\n".join(events)
         if(not config.disable_messages):
-            send_xmpp(message_text)
+            print(message_text)
         sent_announcements.append(announcement.id)
         sent_announcements.append(announcement.checksum)
         with open(".sent_announcements", "w+") as fo:
@@ -51,9 +52,6 @@ if __name__ == "__main__":
 
     announcements = Announcements(Librus(config.login, config.password), on_new_announcement, config.filter_class)
 
-    print "Updating..."
-    try:
-        announcements.update()
-        print "Updated!"
-    except Exception, e:
-        print e
+    print("Updating...")
+    announcements.update()
+    print("Updated!")
