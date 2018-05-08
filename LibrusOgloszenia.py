@@ -35,7 +35,7 @@ def on_new_announcement(announcement):
     events = []
     was_updated = announcement.id in sent_announcements and announcement.checksum not in sent_announcements
 
-    if was_updated or announcement.id not in sent_announcements and "Zmiany w planie Gimnazjum" not in announcement.title:
+    if was_updated or announcement.id not in sent_announcements and "Zmiany w planie Gimnazjum".lower() not in announcement.title.lower():
         if announcement.content:
             for event in announcement.content.split("\n"):
                 events.append(event)
