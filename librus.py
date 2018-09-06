@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import http.cookiejar
+import requests
+import re
 import urllib.request
 import urllib.error
-import config
-from urllib.parse import urlencode
-from json import loads
 
 
 class WrongPasswordError(Exception):
     pass
+
 
 class SessionExpiredError(Exception):
     pass
@@ -17,37 +16,57 @@ class SessionExpiredError(Exception):
 
 class Librus:
     """Klasa odpowiadająca za odbieranie danych z librusa"""
+
+    PATTERN_CSRF = re.compile(
+        '<meta name=\\"csrf-token\\" content=\\"(\w+)\\">')
+
+    BASE_URL = "https://api.librus.pl/2.0/"
+    URL_ANNOUNCEMENT = BASE_URL + "SchoolNotices"
+
     def __init__(self, login, password):
         self.__username = login
         self.__password = password
-        # Stworzenie słoika na ciasteczka ;)
-        self.__cj = cj = http.cookiejar.CookieJar()
-        self.__opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-        self.__login()
+        self.__client = requests.session()
+        self.login()
 
     def login(self):
-        self.__login()
-
-    def __login(self):
         """Funkcja wykonująca logowanie do librusa"""
         # Odebranie ciasteczek
-        self.__opener.addheaders = [('Authorization', 'Basic MzU6NjM2YWI0MThjY2JlODgyYjE5YTMzZjU3N2U5NGNiNGY=')]
+        res = self.__client.get(
+            'https://portal.librus.pl/oauth2/authorize?'
+            'client_id=wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv&'
+            'redirect_uri=http://localhost/bar&response_type=code')
+        csrf = self.PATTERN_CSRF.findall(res.content.decode('utf-8'))[0]
 
-        try:
-            self.__opener.open('https://synergia.librus.pl')
-            list(self.__cj)[0].domain='api.librus.pl'
-            tokens = loads(self.__opener.open('https://api.librus.pl/OAuth/Token',
-                                              data=urlencode({
-                                                  'grant_type': 'password',
-                                                  'username': config.login,
-                                                  'password': config.password,
-                                                  'librus_long_term_token': '1',
-                                              }).encode("utf-8")).read().decode())
+        # Należy pamiętać, że to Xml-Http-Request i wysyłany jest JSON,
+        # zwykły POST nie działa
+        self.__client.post('https://portal.librus.pl/rodzina/login/action',
+                           json={'email': self.__username,
+                                 'password': self.__password},
+                           headers={'X-CSRF-TOKEN': csrf})
 
-        except urllib.error.HTTPError as e:
-            e.getcode() == 400
-            raise WrongPasswordError('Nieprawidłowe hasło')
-        self.__opener.addheaders = [('Authorization', 'Bearer %s' % tokens['access_token'])]
+        res = self.__client.get(
+            'https://portal.librus.pl/oauth2/authorize?'
+            'client_id=wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv&'
+            'redirect_uri=http://localhost/bar&response_type=code', allow_redirects=False)
+
+        code = res.headers['Location'].split("code=")[1]
+
+        librus_token = self.__client.post('https://portal.librus.pl/oauth2/access_token',
+                                          data={
+                                              'grant_type': 'authorization_code',
+                                              'code': code,
+                                              'redirect_uri': 'http://localhost/bar',
+                                              'client_id': 'wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv',
+                                          }).json()['access_token']
+
+        self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
+
+        user_token = self.__client.get(
+            'https://portal.librus.pl/api/SynergiaAccounts').json()[
+            'accounts'][0]['accessToken']
+
+        self.__client.headers.update({'Authorization': 'Bearer {}'.format(user_token)})
 
     def get_announcements(self):
         """
@@ -59,7 +78,7 @@ class Librus:
         """
         # Załadowanie ogłoszeń
         try:
-            data = loads(self.__opener.open('https://api.librus.pl/2.0/SchoolNotices').read().decode())
+            data = self.__client.get(self.URL_ANNOUNCEMENT).json()
         except urllib.error.HTTPError:
             raise SessionExpiredError
         print(data)
