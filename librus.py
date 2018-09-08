@@ -21,6 +21,7 @@ class Librus:
         '<meta name=\\"csrf-token\\" content=\\"(\w+)\\">')
 
     BASE_URL = "https://api.librus.pl/2.0/"
+    URL_ME = BASE_URL + "Me"
     URL_ANNOUNCEMENT = BASE_URL + "SchoolNotices"
 
     def __init__(self, login, password):
@@ -62,11 +63,23 @@ class Librus:
 
         self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
 
-        user_token = self.__client.get(
+        synergia_account = self.__client.get(
             'https://portal.librus.pl/api/SynergiaAccounts').json()[
-            'accounts'][0]['accessToken']
+            'accounts'][0]
+
+        user_token = synergia_account['accessToken']
+        synergia_login = synergia_account['login']
 
         self.__client.headers.update({'Authorization': 'Bearer {}'.format(user_token)})
+
+        if self.__client.get(self.URL_ME).status_code == 401:
+            self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
+
+            user_token = self.__client.get(
+                'https://portal.librus.pl/api/SynergiaAccounts/fresh/' + synergia_login).json()[
+                'accounts'][0]['accessToken']
+
+            self.__client.headers.update({'Authorization': 'Bearer {}'.format(user_token)})
 
     def get_announcements(self):
         """
