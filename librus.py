@@ -64,7 +64,7 @@ class Librus:
         self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
 
         synergia_account = self.__client.get(
-            'https://portal.librus.pl/api/SynergiaAccounts').json()[
+            'https://portal.librus.pl/api/v2/SynergiaAccounts').json()[
             'accounts'][0]
 
         user_token = synergia_account['accessToken']
@@ -76,7 +76,7 @@ class Librus:
             self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
 
             user_token = self.__client.get(
-                'https://portal.librus.pl/api/SynergiaAccounts/fresh/' + synergia_login).json()[
+                'https://portal.librus.pl/api/v2/SynergiaAccounts/fresh/' + synergia_login).json()[
                 'accounts'][0]['accessToken']
 
             self.__client.headers.update({'Authorization': 'Bearer {}'.format(user_token)})
