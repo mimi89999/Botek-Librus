@@ -3,15 +3,13 @@
 
 from announcement import Announcements
 from librus import Librus
-from time import strftime, sleep
 import slixmpp
 import config
 from os.path import exists
 from json import loads, dumps
-from cgi import escape
+
 
 class SendMsgBot(slixmpp.ClientXMPP):
-
     def __init__(self, jid, password, recipients, msg):
         super().__init__(jid, password)
 
@@ -42,7 +40,7 @@ def on_new_announcement(announcement):
         else:
             events.append("\nBrak zmian dla naszej klasy na ten dzień (Jak na razie)")
         message_text = announcement.title+"\n"+"\n".join(events)
-        if(not config.disable_messages):
+        if not config.disable_messages:
             xmpp = SendMsgBot(config.xmpp_from_jid, config.xmpp_password, config.xmpp_receivers, message_text)
             xmpp.connect()
             xmpp.process(forever=False)
@@ -50,6 +48,7 @@ def on_new_announcement(announcement):
         sent_announcements.append(announcement.checksum)
         with open(".sent_announcements", "w+") as fo:
             fo.write(dumps(sent_announcements))
+
 
 if __name__ == "__main__":
     if exists(".sent_announcements"):
