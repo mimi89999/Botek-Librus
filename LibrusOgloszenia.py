@@ -41,7 +41,7 @@ def on_new_announcement(announcement):
             events.append("\nBrak zmian dla naszej klasy na ten dzień (Jak na razie)")
         message_text = announcement.title+"\n"+"\n".join(events)
         if not config.disable_messages:
-            xmpp = SendMsgBot(config.xmpp_from_jid, config.xmpp_password, config.xmpp_receivers, message_text)
+            xmpp = SendMsgBot(config.xmpp_from_jid, config.xmpp_password, config.xmpp_receivers, message_text.strip('\t'))
             xmpp.connect()
             xmpp.process(forever=False)
         sent_announcements.append(announcement.id)
