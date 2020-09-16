@@ -33,10 +33,7 @@ class Librus:
     def login(self):
         """Funkcja wykonująca logowanie do librusa"""
         # Odebranie ciasteczek
-        res = self.__client.get(
-            'https://portal.librus.pl/oauth2/authorize?'
-            'client_id=wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv&'
-            'redirect_uri=http://localhost/bar&response_type=code')
+        res = self.__client.get('https://portal.librus.pl/rodzina')
         csrf = self.PATTERN_CSRF.findall(res.content.decode('utf-8'))[0]
 
         # Należy pamiętać, że to Xml-Http-Request i wysyłany jest JSON,
@@ -45,23 +42,6 @@ class Librus:
                            json={'email': self.__username,
                                  'password': self.__password},
                            headers={'X-CSRF-TOKEN': csrf})
-
-        res = self.__client.get(
-            'https://portal.librus.pl/oauth2/authorize?'
-            'client_id=wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv&'
-            'redirect_uri=http://localhost/bar&response_type=code', allow_redirects=False)
-
-        code = res.headers['Location'].split("code=")[1]
-
-        librus_token = self.__client.post('https://portal.librus.pl/oauth2/access_token',
-                                          data={
-                                              'grant_type': 'authorization_code',
-                                              'code': code,
-                                              'redirect_uri': 'http://localhost/bar',
-                                              'client_id': 'wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv',
-                                          }).json()['access_token']
-
-        self.__client.headers.update({'Authorization': 'Bearer {}'.format(librus_token)})
 
         synergia_account = self.__client.get(
             'https://portal.librus.pl/api/v2/SynergiaAccounts').json()[
